@@ -51,13 +51,13 @@
 
                 <div class="mt-4">
                     <button type="submit" class="btn btn-primary" name="submit" value="submit">
-                        <i class="fa-solid fa-save"></i> Simpan
+                        <i></i> Simpan
                     </button>
                     <button type="reset" class="btn btn-secondary">
-                        <i class="fa-solid fa-rotate-left"></i> Reset
+                        <i></i> Reset
                     </button>
                     <a href="?page=data_obat" class="btn btn-danger">
-                        <i class="fa-solid fa-arrow-left"></i> Kembali
+                        <i></i> Kembali
                     </a>
                 </div>
             </form>

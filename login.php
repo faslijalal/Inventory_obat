@@ -59,7 +59,7 @@ include "koneksi.php";
 
                                             echo '<script>alert("Login Berhasil!");</script>';
 
-                                            // Cek level untuk pengarahan halaman dashboard yang berbeda
+        
                                             if ($row['level'] == 'admin') {
                                                 echo '<script>location.href="index.php";</script>'; // Ubah ke dashboard admin jika ada
                                             } else {

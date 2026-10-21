@@ -11,8 +11,9 @@ if (isset($_POST["submit_pengeluaran"])) {
     $id_obat      = mysqli_real_escape_string($koneksi, $_POST['id_obat']);
     $jumlah       = (int)$_POST['jumlah'];
     $tanggal      = mysqli_real_escape_string($koneksi, $_POST['tanggal_keluar']);
+    $alasan       = mysqli_real_escape_string($koneksi, $_POST['alasan']); // Menangkap input alasan
     
-    // Mengambil id_petugas dari session yang sedang login, atau dari select option jika admin bebas memilih
+    // Mengambil id_petugas dari session yang sedang login, atau dari select option jika ada
     $id_petugas   = isset($_POST['id_petugas']) ? $_POST['id_petugas'] : $_SESSION['petugas']['id_petugas']; 
 
     // 1. Cek stok obat
@@ -27,7 +28,8 @@ if (isset($_POST["submit_pengeluaran"])) {
         // 2. Transaksi Database
         mysqli_begin_transaction($koneksi);
         try {
-            $query_insert = mysqli_query($koneksi, "INSERT INTO pengeluaran (id_siswa, id_obat, jumlah, tanggal_pengeluaran, id_petugas) VALUES ('$id_siswa', '$id_obat', '$jumlah', '$tanggal', '$id_petugas')");
+            // Query INSERT ditambah kolom alasan
+            $query_insert = mysqli_query($koneksi, "INSERT INTO pengeluaran (id_siswa, id_obat, jumlah, tanggal_pengeluaran, alasan, id_petugas) VALUES ('$id_siswa', '$id_obat', '$jumlah', '$tanggal', '$alasan', '$id_petugas')");
 
             $query_update = mysqli_query($koneksi, "UPDATE obat SET stok = stok - $jumlah WHERE id_obat = '$id_obat'");
 
@@ -67,14 +69,14 @@ if (isset($_POST["submit_pengeluaran"])) {
                 <div class="card-body">
                     <form action="" method="POST">
                         <div class="mb-3">
-                            <label class="form-label font-weight-bold">Pilih Siswa & Kamar</label>
+                            <label class="form-label font-weight-bold">Pilih Siswa & Kelas</label>
                             <select name="id_siswa" class="form-select" required>
-                                <option value="">-- Pilih Siswa (Kamar) --</option>
+                                <option value="">-- Pilih Siswa (Kelas) --</option>
                                 <?php 
-                                $siswa_query = mysqli_query($koneksi, "SELECT id_siswa, nama, kamar FROM siswa ORDER BY nama ASC");
+                                $siswa_query = mysqli_query($koneksi, "SELECT id_siswa, nama, kelas FROM siswa ORDER BY nama ASC");
                                 while($s = mysqli_fetch_array($siswa_query)): 
                                 ?>
-                                    <option value="<?= $s['id_siswa']; ?>"><?= $s['nama']; ?> - Kamar: <?= $s['kamar']; ?></option>
+                                    <option value="<?= $s['id_siswa']; ?>"><?= $s['nama']; ?> (Kelas: <?= $s['kelas']; ?>)</option>
                                 <?php endwhile; ?>
                             </select>
                         </div>
@@ -100,6 +102,12 @@ if (isset($_POST["submit_pengeluaran"])) {
                         <div class="mb-3">
                             <label class="form-label font-weight-bold">Tanggal Pengeluaran</label>
                             <input type="date" name="tanggal_keluar" class="form-control" value="<?= date('Y-m-d'); ?>" required>
+                        </div>
+
+                        <!-- Input Alasan Pengeluaran Obat -->
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold">Alasan / Keluhan</label>
+                            <textarea name="alasan" class="form-control" rows="3" placeholder="Contoh: Sakit kepala / Demam tinggi" required></textarea>
                         </div>
 
                         <div class="mb-3">
@@ -135,9 +143,10 @@ if (isset($_POST["submit_pengeluaran"])) {
                                 <tr class="table-light">
                                     <th>No</th>
                                     <th>Nama Siswa</th>
-                                    <th>Kamar</th>
+                                    <th>Kelas</th>
                                     <th>Obat</th>
                                     <th>Jumlah</th>
+                                    <th>Alasan</th>
                                     <th>Petugas</th>
                                     <th>Tanggal</th>
                                 </tr>
@@ -145,8 +154,8 @@ if (isset($_POST["submit_pengeluaran"])) {
                             <tbody>
                                 <?php
                                 $no = 1;
-                                // Query JOIN disesuaikan dengan kolom tanggal_pengeluaran di database
-                                $query_tabel = mysqli_query($koneksi, "SELECT p.tanggal_pengeluaran, p.jumlah, s.nama AS nama_siswa, s.kamar AS kamar_siswa, o.nama AS nama_obat, pet.nama AS nama_petugas
+                                // Query JOIN diperbarui untuk mengambil kolom alasan dari tabel pengeluaran
+                                $query_tabel = mysqli_query($koneksi, "SELECT p.tanggal_pengeluaran, p.jumlah, p.alasan, s.nama AS nama_siswa, s.kelas AS kelas_siswa, o.nama AS nama_obat, pet.nama AS nama_petugas
                                     FROM pengeluaran AS p
                                     LEFT JOIN siswa AS s ON p.id_siswa = s.id_siswa
                                     LEFT JOIN obat AS o ON p.id_obat = o.id_obat
@@ -159,9 +168,10 @@ if (isset($_POST["submit_pengeluaran"])) {
                                     <tr>
                                         <td><?= $no++; ?></td>
                                         <td><?= $row['nama_siswa']; ?></td>
-                                        <td><?= $row['kamar_siswa']; ?></td>
+                                        <td><?= $row['kelas_siswa']; ?></td>
                                         <td><span class="badge bg-info text-dark"><?= $row['nama_obat']; ?></span></td>
                                         <td><?= $row['jumlah']; ?></td>
+                                        <td><?= $row['alasan']; ?></td>
                                         <td><?= $row['nama_petugas']; ?></td>
                                         <td><?= $row['tanggal_pengeluaran']; ?></td>
                                     </tr>
@@ -169,7 +179,7 @@ if (isset($_POST["submit_pengeluaran"])) {
                                 
                                 <?php if (mysqli_num_rows($query_tabel) == 0): ?>
                                     <tr>
-                                        <td colspan="7" class="text-center text-muted">Belum ada data pengeluaran obat.</td>
+                                        <td colspan="8" class="text-center text-muted">Belum ada data pengeluaran obat.</td>
                                     </tr>
                                 <?php endif; ?>
                             </tbody>
